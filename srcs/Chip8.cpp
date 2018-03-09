@@ -417,14 +417,20 @@ int	Chip8::run()
   /*std::cout << "Dumping memory" << std::endl;
   dumpMemory();*/
   std::cout << "Running game..." << std::endl;
+  sf::Clock clock;
   while (m_running)
   {
+    sf::Time elapsed = clock.getElapsedTime();
+    if (elapsed.asMicroseconds() >= 1200)
+    {
+      runCycle();
+      if (m_draw)
+	m_screen.draw();
+      m_draw = false;
+      clock.restart();
+    }
     if (!m_screen.update())
       m_running = false;
-    runCycle();
-    if (m_draw)
-      m_screen.draw();
-    m_draw = false;
   }
   return (0);
 }
