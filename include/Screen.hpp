@@ -37,6 +37,6 @@ class Screen
     void	clear();
     void	draw();
     bool	update();
-    void	onKeyPressed(std::function<void(uint8_t)>);
-    void	onKeyReleased(std::function<void(uint8_t)>);
+    void	onKeyPressed(std::function<void(uint8_t)> const &);
+    void	onKeyReleased(std::function<void(uint8_t)> const &);
 };

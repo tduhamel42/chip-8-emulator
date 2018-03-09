@@ -52,7 +52,7 @@ Chip8::Chip8(std::string const &rom_file)
   // Other things
   m_delay_timer = 0;
   m_sound_timer = 0;
-  m_draw = false;
+  m_draw = true;
   m_running = true;
 
   // Opcodes initialization
@@ -61,11 +61,11 @@ Chip8::Chip8(std::string const &rom_file)
   // Init event
   m_screen.onKeyPressed([&](int key)
       {
-	m_keys[key] = 1;
+      m_keys[key] = 1;
       });
   m_screen.onKeyReleased([&](int key)
       {
-	m_keys[key] = 0;
+      m_keys[key] = 0;
       });
 
   loadRom(rom_file);
@@ -105,7 +105,7 @@ void	Chip8::dumpMemory()
 
 void	Chip8::initOpcodes()
 {
-  m_opcodes[0x0000] = [&]()
+  m_opcodes[0x0000] = [&]() -> bool
   {
     switch (m_current_opcode & 0x000F)
     {
@@ -121,55 +121,63 @@ void	Chip8::initOpcodes()
 	m_pc += 2;
 	break;
     }
+    return (true);
   };
-  m_opcodes[0x1000] = [&]()
+  m_opcodes[0x1000] = [&]() -> bool
   {
     // Jumps to address
     m_pc = m_current_opcode & 0x0FFF;
+    return (true);
   };
-  m_opcodes[0x2000] = [&]()
+  m_opcodes[0x2000] = [&]() -> bool
   {
     // Calls subroutine
     m_stack[m_sp++] = m_pc; 
     m_pc = m_current_opcode & 0x0FFF;
+    return (true);
   };
-  m_opcodes[0x3000] = [&]()
+  m_opcodes[0x3000] = [&]() -> bool
   {
     // Skips next instruction if register is equal to val
     if (m_regs[(m_current_opcode & 0x0F00) >> 8] == (m_current_opcode & 0x00FF))
       m_pc += 4;
     else
       m_pc += 2;
+    return (true);
   };
-  m_opcodes[0x4000] = [&]()
+  m_opcodes[0x4000] = [&]() -> bool
   {
     // Skips next instruction if register is not equal to val
     if (m_regs[(m_current_opcode & 0x0F00) >> 8] != (m_current_opcode & 0x00FF))
       m_pc += 4;
     else
       m_pc += 2;
+    return (true);
   };
-  m_opcodes[0x4000] = [&]()
+  m_opcodes[0x4000] = [&]() -> bool
   {
     // Skips next instruction if register is equal to register
     if (m_regs[(m_current_opcode & 0x0F00) >> 8] == m_regs[(m_current_opcode & 0x00F0) >> 8])
       m_pc += 4;
     else
       m_pc += 2;
+    return (true);
   };
-  m_opcodes[0x6000] = [&]()
+  m_opcodes[0x6000] = [&]() -> bool
   {
     // Sets register's value
     m_regs[(m_current_opcode & 0x0F00) >> 8] = (m_current_opcode & 0x00FF);
     m_pc += 2;
+    return (true);
   };
-  m_opcodes[0x7000] = [&]()
+  m_opcodes[0x7000] = [&]() -> bool
   {
     // Adds value to register
     m_regs[(m_current_opcode & 0x0F00) >> 8] += (m_current_opcode & 0x00FF);
     m_pc += 2;
+    return (true);
   };
-  m_opcodes[0x8000] = [&]()
+  m_opcodes[0x8000] = [&]() -> bool
   {
     switch(m_current_opcode & 0x000F)
     {
@@ -235,32 +243,37 @@ void	Chip8::initOpcodes()
 	m_pc += 2;
 	break;
     }
+    return (true);
   };
-  m_opcodes[0x9000] = [&]()
+  m_opcodes[0x9000] = [&]() -> bool
   {
     if (m_regs[(m_current_opcode & 0x0F00) >> 8] !=
 	m_regs[(m_current_opcode & 0x00F0) >> 4])
       m_pc += 4;
     else
       m_pc += 2;
+    return (true);
   };
-  m_opcodes[0xA000] = [&]()
+  m_opcodes[0xA000] = [&]() -> bool
   {
     m_i = m_current_opcode & 0x0FFF;
     m_pc += 2;
+    return (true);
   };
-  m_opcodes[0xB000] = [&]()
+  m_opcodes[0xB000] = [&]() -> bool
   {
     m_pc = (m_current_opcode & 0x0FFF) + m_regs[0];
+    return (true);
   };
-  m_opcodes[0xC000] = [&]()
+  m_opcodes[0xC000] = [&]() -> bool
   {
     std::srand(std::time(0));
     m_regs[(m_current_opcode & 0x0F00) >> 8] = (std::rand() % 0xFF) &
       (m_current_opcode & 0x00FF);
     m_pc += 2;
+    return (true);
   };
-  m_opcodes[0XD000] = [&]()
+  m_opcodes[0XD000] = [&]() -> bool
   {
     uint16_t x = m_regs[(m_current_opcode & 0x0F00) >> 8];
     uint16_t y = m_regs[(m_current_opcode & 0x00F0) >> 4];
@@ -286,8 +299,9 @@ void	Chip8::initOpcodes()
     }
     m_draw = true;
     m_pc += 2;
+    return (true);
   };
-  m_opcodes[0xE000] = [&]()
+  m_opcodes[0xE000] = [&]() -> bool
   {
     switch(m_current_opcode & 0x00FF)
     {
@@ -304,75 +318,77 @@ void	Chip8::initOpcodes()
 	  m_pc += 2;
 	break;
     }
-    m_opcodes[0xF000] = [&]()
+    return (true);
+  };
+  m_opcodes[0xF000] = [&]() -> bool
+  {
+    switch(m_current_opcode & 0x00FF)
     {
-      switch(m_current_opcode & 0x00FF)
-      {
-	case 0x0007:
-	  m_regs[(m_current_opcode & 0x0F00) >> 8] = m_delay_timer;
-	  m_pc += 2;
-	  break;
-	case 0x000A: 
+      case 0x0007:
+	m_regs[(m_current_opcode & 0x0F00) >> 8] = m_delay_timer;
+	m_pc += 2;
+	break;
+      case 0x000A: 
+	{
+	  bool keyPress = false;
+
+	  for(int i = 0; i < 16; ++i)
 	  {
-	    bool keyPress = false;
-
-	    for(int i = 0; i < 16; ++i)
+	    if(m_keys[i] != 0)
 	    {
-	      if(m_keys[i] != 0)
-	      {
-		m_regs[(m_current_opcode & 0x0F00) >> 8] = i;
-		keyPress = true;
-	      }
+	      m_regs[(m_current_opcode & 0x0F00) >> 8] = i;
+	      keyPress = true;
 	    }
-	    if(!keyPress)						
-	      return;
-	    m_pc += 2;					
 	  }
-	  break;
-	case 0x0015:
-	  m_delay_timer = m_regs[(m_current_opcode & 0x0F00) >> 8];
-	  m_pc += 2;
-	  break;
-	case 0x0018:
-	  m_sound_timer = m_regs[(m_current_opcode & 0x0F00) >> 8];
-	  m_pc += 2;
-	  break;
-	case 0x001E:
-	  if(m_i + m_regs[(m_current_opcode & 0x0F00) >> 8] > 0xFFF)
-	    m_regs[0xF] = 1;
-	  else
-	    m_regs[0xF] = 0;
-	  m_i += m_regs[(m_current_opcode & 0x0F00) >> 8];
-	  m_pc += 2;
-	  break;
-	case 0x0029:
-	  m_i = m_regs[(m_current_opcode & 0x0F00) >> 8] * 0x5;
-	  m_pc += 2;
-	  break;
-	case 0x0033:
-	  m_memory[m_i] = m_regs[(m_current_opcode & 0x0F00) >> 8] / 100;
-	  m_memory[m_i + 1] = (m_regs[(m_current_opcode & 0x0F00) >> 8] /
-	      10) % 10;
-	  m_memory[m_i + 2] = (m_regs[(m_current_opcode & 0x0F00) >> 8] %
-	      100) % 10;					
-	  m_pc += 2;
-	  break;
-	case 0x0055:
-	  for (int i = 0; i <= ((m_current_opcode & 0x0F00) >> 8); ++i)
-	    m_memory[m_i + i] = m_regs[i];	
+	  if(!keyPress)						
+	    return (false);
+	  m_pc += 2;					
+	}
+	break;
+      case 0x0015:
+	m_delay_timer = m_regs[(m_current_opcode & 0x0F00) >> 8];
+	m_pc += 2;
+	break;
+      case 0x0018:
+	m_sound_timer = m_regs[(m_current_opcode & 0x0F00) >> 8];
+	m_pc += 2;
+	break;
+      case 0x001E:
+	if(m_i + m_regs[(m_current_opcode & 0x0F00) >> 8] > 0xFFF)
+	  m_regs[0xF] = 1;
+	else
+	  m_regs[0xF] = 0;
+	m_i += m_regs[(m_current_opcode & 0x0F00) >> 8];
+	m_pc += 2;
+	break;
+      case 0x0029:
+	m_i = m_regs[(m_current_opcode & 0x0F00) >> 8] * 0x5;
+	m_pc += 2;
+	break;
+      case 0x0033:
+	m_memory[m_i] = m_regs[(m_current_opcode & 0x0F00) >> 8] / 100;
+	m_memory[m_i + 1] = (m_regs[(m_current_opcode & 0x0F00) >> 8] /
+	    10) % 10;
+	m_memory[m_i + 2] = (m_regs[(m_current_opcode & 0x0F00) >> 8] %
+	    100) % 10;					
+	m_pc += 2;
+	break;
+      case 0x0055:
+	for (int i = 0; i <= ((m_current_opcode & 0x0F00) >> 8); ++i)
+	  m_memory[m_i + i] = m_regs[i];	
 
-	  m_i += ((m_current_opcode & 0x0F00) >> 8) + 1;
-	  m_pc += 2;
-	  break;
-	case 0x0065:
-	  for (int i = 0; i <= ((m_current_opcode & 0x0F00) >> 8); ++i)
-	    m_regs[i] = m_memory[m_i + i];			
+	m_i += ((m_current_opcode & 0x0F00) >> 8) + 1;
+	m_pc += 2;
+	break;
+      case 0x0065:
+	for (int i = 0; i <= ((m_current_opcode & 0x0F00) >> 8); ++i)
+	  m_regs[i] = m_memory[m_i + i];			
 
-	  m_i += ((m_current_opcode & 0x0F00) >> 8) + 1;
-	  m_pc += 2;
-	  break;
-      }
-    };
+	m_i += ((m_current_opcode & 0x0F00) >> 8) + 1;
+	m_pc += 2;
+	break;
+    }
+    return (true);
   };
 }
 
@@ -385,7 +401,8 @@ void	Chip8::runCycle()
   if (it == m_opcodes.end())
     throw std::runtime_error("Unknown opcode: " +
 	std::to_string(m_current_opcode));
-  m_opcodes[m_current_opcode & 0xF000]();
+  if (!m_opcodes[m_current_opcode & 0xF000]())
+    return ;
   if (m_delay_timer > 0)
     --m_delay_timer;
   if (m_sound_timer > 0)

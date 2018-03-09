@@ -41,7 +41,7 @@ class Chip8
 
   // Opcodes
   uint16_t m_current_opcode;
-  std::unordered_map<uint16_t, std::function<void()>> m_opcodes;
+  std::unordered_map<uint16_t, std::function<bool()>> m_opcodes;
 
   // The emulated screen
   Screen m_screen;

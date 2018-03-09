@@ -56,6 +56,7 @@ void	Screen::draw()
       }
     }
   }
+  m_window->display();
 }
 
 void	Screen::keyPressed(sf::Event const &event)
@@ -131,16 +132,15 @@ bool	Screen::update()
     else if (event.type == sf::Event::KeyReleased)
       keyReleased(event);
   }
-  m_window->display();
   return (true);
 }
 
-void	Screen::onKeyPressed(std::function<void(uint8_t)> func)
+void	Screen::onKeyPressed(std::function<void(uint8_t)> const &func)
 {
   m_on_key_pressed = func;
 }
 
-void	Screen::onKeyReleased(std::function<void(uint8_t)> func)
+void	Screen::onKeyReleased(std::function<void(uint8_t)> const &func)
 {
   m_on_key_released = func;
 }
