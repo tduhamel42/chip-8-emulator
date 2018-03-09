@@ -396,7 +396,6 @@ void	Chip8::runCycle()
 {
   // Gets opcode from memory(rom part)
   m_current_opcode = m_memory[m_pc] << 8 | m_memory[m_pc + 1];
-  //std::cout << "Current opcode: " << m_current_opcode << std::endl;
   auto it = m_opcodes.find(m_current_opcode & 0xF000);
   if (it == m_opcodes.end())
     throw std::runtime_error("Unknown opcode: " +
@@ -415,8 +414,8 @@ void	Chip8::runCycle()
 
 int	Chip8::run()
 {
-  std::cout << "Dumping memory" << std::endl;
-  dumpMemory();
+  /*std::cout << "Dumping memory" << std::endl;
+  dumpMemory();*/
   std::cout << "Running game..." << std::endl;
   while (m_running)
   {
