@@ -93,10 +93,9 @@ bool	Chip8::loadRom(std::string const &rom_file)
 
 void	Chip8::dumpMemory()
 {
-  const char *p = reinterpret_cast<const char *>(m_memory);
   for (unsigned int i = 0; i < MEMORY_SIZE; i++) {
     std::cout << "0x" << std::hex << std::setw(8)
-      << std::setfill('0') << int(p[i]) << " ";
+      << std::setfill('0') << int(m_memory[i]) << " ";
     if (i % 16 == 0)
       std::cout << std::endl;
   }
